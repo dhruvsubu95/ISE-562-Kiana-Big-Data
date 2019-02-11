@@ -1,0 +1,61 @@
+import os
+import json
+import pandas as pd
+import numpy as np
+import pyspark
+import pyspark.sql.functions as f
+from pyspark.sql import SparkSession
+from pyspark.sql import SQLContext
+from pyspark import SparkContext
+sc = SparkContext()
+sqlContext = SQLContext(sc)
+
+###Start Spark Session
+spark = SparkSession \
+    .builder \
+        .appName("kiana analytics") \
+        .config("spark.some.config.option", "some-value") \
+        .getOrCreate()
+
+# create new table with all the files in one table 
+from pyspark.sql.types import *
+field = [StructField('ClientMacAddr',StringType(), True),StructField('Level', StringType(), True),
+         StructField('Store', StringType(), True),StructField('lat',StringType(), True),
+         StructField('lng',StringType(), True),StructField('localtime',StringType(), True)]
+schema = StructType(field)
+df = sqlContext.createDataFrame(sc.emptyRDD(), schema)
+
+# read in files from 0-19 folder
+path='/Volumes/Amanda Shantz Backup Drive/0-19/'
+for root,dire,file in os.walk(path):
+    for i in file:
+        j = path + i
+        val = spark.read.json(j)
+        df = df.union(val)
+        
+df2 = df.groupBy('ClientMacAddr').count()
+
+df3 = df2.orderBy($"count".desc)
+
+# pip install plotly in terminal 
+import plotly
+from pyspark.sql import SQLContext 
+sqlContext = SQLContext(sc) 
+import plotly.plotly as py
+import plotly.graph_objs as go 
+import requests
+import matplotlib.pyplot as plt
+
+# attempting graphing for ONE ClientMacAddr (24789)  
+test = df.filter(df.ClientMacAddr == '00:6c:fd:0f:6a:49').collect()
+
+lngList = []
+latList = []
+
+for i in range(len(test)):
+    row = test[i]
+    lngList.append(float(row.lng))
+    latList.append(float(row.lat))
+
+
+plt.scatter(lngList, latList)
