@@ -35,7 +35,7 @@ for root,dire,file in os.walk(path):
         
 df2 = df.groupBy('ClientMacAddr').count()
 
-df3 = df2.orderBy($"count".desc)
+df3 = df2.orderBy("count".desc)
 
 # pip install plotly in terminal 
 import plotly
